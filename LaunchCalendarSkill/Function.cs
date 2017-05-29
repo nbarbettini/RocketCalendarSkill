@@ -19,15 +19,15 @@ namespace LaunchCalendarSkill
         public Task<SkillResponse> FunctionHandler(SkillRequest input, ILambdaContext context)
         {
             var logger = context.Logger;
+            logger.LogLine($"Incoming {input.Request.Type}");
 
             switch (input.Request)
             {
                 case LaunchRequest launchRequest:
-                    logger.LogLine($"Incoming LaunchRequest");
                     return HandleWelcomeAsync(launchRequest, logger);
 
                 case IntentRequest intentRequest:
-                    logger.LogLine($"Incoming IntentRequest {intentRequest.Intent.Name}");
+                    logger.LogLine($"Incoming intent {intentRequest.Intent.Name}");
                     return HandleIntentAsync(intentRequest, logger);
             }
 
