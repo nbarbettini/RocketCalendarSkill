@@ -58,15 +58,21 @@ namespace LaunchCalendarSkill
             {
                 var launchLibraryClient = new LaunchLibraryApi.LaunchLibraryClient();
                 var limit = agencyId == null ? 1 : 10;
-                var upcomingLaunches = await launchLibraryClient.GetLaunches(startDate: DateTimeOffset.UtcNow);
+                var upcomingLaunches = await launchLibraryClient.GetLaunches(startDate: DateTimeOffset.UtcNow, limit: limit);
 
                 var launch = agencyId == null
                     ? upcomingLaunches.FirstOrDefault()
                     : upcomingLaunches.FirstOrDefault(l => l.Rocket.Agencies.Any(a => a.Id == agencyId));
 
-                if (launch == null) responseSpeech = $"I don't see any upcoming {(agencyId == null ? "" : agencyName)} launches.";
-
-                responseSpeech = $"{launch.Rocket.Name} will be launching the {launch.Missions.First().Name} mission <break strength=\"weak\"/> from {launch.Location.Name} <break strength=\"weak\"/> no earlier than <say-as interpret-as=\"date\">????{launch.Net.Value.ToString("MMdd")}</say-as>.";
+                if (launch == null)
+                {
+                    responseSpeech = $"I don't see any upcoming {(agencyId == null ? "" : agencyName)} launches.";
+                }
+                else
+                {
+                    responseSpeech = $"{launch.Rocket.Name} will be launching the {launch.Missions.First().Name} mission <break strength=\"weak\"/> from {launch.Location.Name} <break strength=\"weak\"/> no earlier than <say-as interpret-as=\"date\">????{launch.Net.Value.ToString("MMdd")}</say-as>.";
+                }
+                
             }
             catch (Exception ex)
             {
