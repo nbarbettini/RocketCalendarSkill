@@ -29,9 +29,10 @@ namespace LaunchCalendarSkill
                 case IntentRequest intentRequest:
                     logger.LogLine($"Incoming intent {intentRequest.Intent.Name}");
                     return HandleIntentAsync(intentRequest, logger);
-            }
 
-            throw new NotImplementedException("Unknown request type.");
+                // Ignore any request types we don't understand
+                default: return Task.FromResult<SkillResponse>(null);
+            }
         }
 
         private Task<SkillResponse> HandleWelcomeAsync(LaunchRequest launchRequest, ILambdaLogger logger)
@@ -47,7 +48,7 @@ namespace LaunchCalendarSkill
         private async Task<SkillResponse> HandleIntentAsync(IntentRequest intentRequest, ILambdaLogger logger)
         {
             bool validIntent = ValidIntentNames.Contains(intentRequest.Intent.Name, StringComparer.Ordinal);
-            if (!validIntent) throw new ArgumentException("Unkonwn intent");
+            if (!validIntent) throw new ArgumentException("Unknown intent.");
 
             var agencyName = intentRequest.Intent.Slots?.FirstOrDefault(slot => slot.Key == "agency").Value?.Value;
             var agencyId = GetAgencyId(agencyName);
