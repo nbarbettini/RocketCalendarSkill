@@ -1,10 +1,11 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netcoreapp1.0</TargetFramework>
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="alexa.net" Version="1.0.0-beta-8" />
     <PackageReference Include="Amazon.Lambda.Core" Version="1.0.0" />
     <PackageReference Include="Amazon.Lambda.Serialization.Json" Version="1.1.0" />
   </ItemGroup>
