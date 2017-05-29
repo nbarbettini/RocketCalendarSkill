@@ -88,6 +88,8 @@ namespace LaunchCalendarSkill
             {
                 case "SPACE X":
                 case "SPACEX": return 121;
+                case "NASA": return 44;
+                case "JAXA": return 37;
                 default: return null;
             }
         }
