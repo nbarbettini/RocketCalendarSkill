@@ -64,9 +64,9 @@ namespace LaunchCalendarSkill
                     ? upcomingLaunches.FirstOrDefault()
                     : upcomingLaunches.FirstOrDefault(l => l.Rocket.Agencies.Any(a => a.Id == agencyId));
 
-                responseSpeech = upcomingLaunches.Any()
-                    ? $"{launch.Rocket.Name} will be launching the {launch.Missions.First().Name} mission <break strength=\"weak\"/> from {launch.Location.Name} <break strength=\"weak\"/> no earlier than <say-as interpret-as=\"date\">????{launch.Net.Value.ToString("MMdd")}</say-as>."
-                    : $"I don't see any upcoming {(agencyId == null ? "" : agencyName)} launches.";
+                if (launch == null) responseSpeech = $"I don't see any upcoming {(agencyId == null ? "" : agencyName)} launches.";
+
+                responseSpeech = $"{launch.Rocket.Name} will be launching the {launch.Missions.First().Name} mission <break strength=\"weak\"/> from {launch.Location.Name} <break strength=\"weak\"/> no earlier than <say-as interpret-as=\"date\">????{launch.Net.Value.ToString("MMdd")}</say-as>.";
             }
             catch (Exception ex)
             {
