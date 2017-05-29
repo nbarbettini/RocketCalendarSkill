@@ -1,5 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Threading.Tasks;
@@ -10,7 +12,7 @@ namespace LaunchCalendarSkill.LaunchLibraryApi
     {
         private const string LaunchesBaseUrl = "https://launchlibrary.net/1.2/launch?mode=verbose";
 
-        public async Task<Launch[]> GetLaunches(DateTimeOffset startDate, int limit = 10, int offset = 0)
+        public async Task<IEnumerable<Launch>> GetLaunches(DateTimeOffset startDate, int limit = 10, int offset = 0)
         {
             var url = $"{LaunchesBaseUrl}&startdate={startDate.ToUnixTimeSeconds()}&limit={limit}&offset={offset}";
 
@@ -31,7 +33,7 @@ namespace LaunchCalendarSkill.LaunchLibraryApi
             };
             var launchesResponse = JsonConvert.DeserializeObject<LaunchesResponse>(json, settings);
 
-            return launchesResponse?.Launches;
+            return launchesResponse?.Launches ?? Enumerable.Empty<Launch>();
         }
     }
 }
