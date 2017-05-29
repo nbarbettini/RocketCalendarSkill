@@ -1,0 +1,13 @@
+{
+  "intents": [
+    {
+      "slots": [
+        {
+          "name": "agency",
+          "type": "AGENCY"
+        }
+      ],
+      "intent": "NextLaunchIntent"
+    }
+  ]
+}

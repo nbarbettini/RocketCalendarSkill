@@ -23,7 +23,14 @@ namespace LaunchCalendarSkill.LaunchLibraryApi
             response.EnsureSuccessStatusCode();
 
             var json = await response.Content.ReadAsStringAsync();
-            var launchesResponse = JsonConvert.DeserializeObject<LaunchesResponse>(json);
+
+            var settings = new JsonSerializerSettings()
+            {
+                DateFormatString = "yyyyMMddTHHmmssZ",
+                DateParseHandling = DateParseHandling.DateTimeOffset
+            };
+            var launchesResponse = JsonConvert.DeserializeObject<LaunchesResponse>(json, settings);
+
             return launchesResponse?.Launches;
         }
     }

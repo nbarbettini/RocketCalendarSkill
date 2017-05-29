@@ -1,0 +1,10 @@
+NextLaunchIntent what is the next {agency} launch
+NextLaunchIntent what's the next {agency} launch
+NextLaunchIntent where is the next {agency} launch
+NextLaunchIntent where's the next {agency} launch
+NextLaunchIntent when is the next {agency} launch
+NextLaunchIntent when's the next {agency} launch
+NextLaunchIntent what the next {agency} launch is
+NextLaunchIntent where the next {agency} launch is
+NextLaunchIntent when the next {agency} launch is
+NextLaunchIntent tell me about the next {agency} launch

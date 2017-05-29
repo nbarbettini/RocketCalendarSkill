@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Newtonsoft.Json;
+using System;
 using System.Collections.Generic;
 
 namespace LaunchCalendarSkill.LaunchLibraryApi
@@ -7,15 +8,16 @@ namespace LaunchCalendarSkill.LaunchLibraryApi
     {
         public int Id { get; set; }
         public string Name { get; set; }
-        public string WindowStart { get; set; }
-        public string WindowEnd { get; set; }
-        public string Net { get; set; }
-        public int? WsStamp { get; set; }
-        public int? WeStamp { get; set; }
-        public int? NetStamp { get; set; }
-        public string IsoStart { get; set; }
-        public string IsoEnd { get; set; }
-        public string IsoNet { get; set; }
+
+        [JsonProperty("isostart")]
+        public DateTimeOffset? WindowStart { get; set; }
+
+        [JsonProperty("isoend")]
+        public DateTimeOffset? WindowEnd { get; set; }
+
+        [JsonProperty("isonet")]
+        public DateTimeOffset? Net { get; set; }
+
         public int? Status { get; set; }
         public int? TbdTime { get; set; }
         public List<string> VidUrls { get; set; }

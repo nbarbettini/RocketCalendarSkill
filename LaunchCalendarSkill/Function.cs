@@ -14,6 +14,8 @@ namespace LaunchCalendarSkill
 {
     public class Function
     {
+        private readonly string[] ValidIntentNames = new[] { "NextLaunchIntent" };
+
         public Task<SkillResponse> FunctionHandler(SkillRequest input, ILambdaContext context)
         {
             var logger = context.Logger;
@@ -44,21 +46,27 @@ namespace LaunchCalendarSkill
 
         private async Task<SkillResponse> HandleIntentAsync(IntentRequest intentRequest, ILambdaLogger logger)
         {
-            bool recognizedName = intentRequest.Intent.Name.Equals("NextLaunchIntent", StringComparison.Ordinal);
-            if (!recognizedName) throw new ArgumentException("Unkonwn intent");
+            bool validIntent = ValidIntentNames.Contains(intentRequest.Intent.Name, StringComparer.Ordinal);
+            if (!validIntent) throw new ArgumentException("Unkonwn intent");
 
-            var launchLibraryClient = new LaunchLibraryApi.LaunchLibraryClient();
+            var agencyName = intentRequest.Intent.Slots?.FirstOrDefault(slot => slot.Key == "agency").Value?.Value;
+            var agencyId = GetAgencyId(agencyName);
 
             var responseSpeech = string.Empty;
 
             try
             {
-                var upcomingLaunches = await launchLibraryClient.GetLaunches(startDate: DateTimeOffset.UtcNow, limit: 1);
-                var launch = upcomingLaunches.SingleOrDefault();
+                var launchLibraryClient = new LaunchLibraryApi.LaunchLibraryClient();
+                var limit = agencyId == null ? 1 : 10;
+                var upcomingLaunches = await launchLibraryClient.GetLaunches(startDate: DateTimeOffset.UtcNow);
+
+                var launch = agencyId == null
+                    ? upcomingLaunches.FirstOrDefault()
+                    : upcomingLaunches.FirstOrDefault(l => l.Rocket.Agencies.Any(a => a.Id == agencyId));
 
                 responseSpeech = upcomingLaunches.Any()
-                    ? $"{launch.Rocket.Name} will be launching from {launch.Location.Name} no earlier than {launch.Net}."
-                    : "There aren't any upcoming launches.";
+                    ? $"{launch.Rocket.Name} will be launching the {launch.Missions.First().Name} mission <break strength=\"weak\"/> from {launch.Location.Name} <break strength=\"weak\"/> no earlier than <say-as interpret-as=\"date\">????{launch.Net.Value.ToString("MMdd")}</say-as>."
+                    : $"I don't see any upcoming {(agencyId == null ? "" : agencyName)} launches.";
             }
             catch (Exception ex)
             {
@@ -66,10 +74,22 @@ namespace LaunchCalendarSkill
                 responseSpeech = "Sorry, I wasn't able to retrieve the next launch.";
             }
 
-            return ResponseBuilder.Tell(new PlainTextOutputSpeech()
+            return ResponseBuilder.Tell(new SsmlOutputSpeech()
             {
-                Text = responseSpeech
+                Ssml = responseSpeech
             });
+        }
+
+        private static int? GetAgencyId(string agencyName)
+        {
+            if (string.IsNullOrEmpty(agencyName)) return null;
+
+            switch (agencyName.ToUpper())
+            {
+                case "SPACE X":
+                case "SPACEX": return 121;
+                default: return null;
+            }
         }
     }
 
