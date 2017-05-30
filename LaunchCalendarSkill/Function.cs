@@ -4,7 +4,6 @@ using Alexa.NET.Request.Type;
 using Alexa.NET.Response;
 using Amazon.Lambda.Core;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -15,6 +14,15 @@ namespace LaunchCalendarSkill
 {
     public class Function
     {
+        private Lazy<Task<LaunchLibraryApi.Launch[]>> _cachedUpcomingLaunches;
+        private DateTimeOffset _cacheTimestamp;
+
+        public Function()
+        {
+            _cachedUpcomingLaunches = new Lazy<Task<LaunchLibraryApi.Launch[]>>(GetUpcomingLaunches);
+            _cacheTimestamp = DateTimeOffset.Now;
+        }
+
         public Task<SkillResponse> FunctionHandler(SkillRequest input, ILambdaContext context)
         {
             var logger = context.Logger;
@@ -56,9 +64,7 @@ namespace LaunchCalendarSkill
 
             try
             {
-                var launchLibraryClient = new LaunchLibraryApi.LaunchLibraryClient();
-                var limit = agencyId == null ? 1 : 25;
-                var upcomingLaunches = await launchLibraryClient.GetLaunches(startDate: DateTimeOffset.UtcNow, limit: limit);
+                var upcomingLaunches = await GetUpcomingLaunchesFromCache();
 
                 var launch = agencyId == null
                     ? upcomingLaunches.FirstOrDefault()
@@ -86,6 +92,22 @@ namespace LaunchCalendarSkill
             });
         }
 
+        private Task<LaunchLibraryApi.Launch[]> GetUpcomingLaunchesFromCache()
+        {
+            if (DateTimeOffset.Now.Subtract(_cacheTimestamp) > TimeSpan.FromHours(4))
+            {
+                _cachedUpcomingLaunches = new Lazy<Task<LaunchLibraryApi.Launch[]>>(GetUpcomingLaunches);
+            }
+
+            return _cachedUpcomingLaunches.Value;
+        }
+
+        private Task<LaunchLibraryApi.Launch[]> GetUpcomingLaunches()
+        {
+            var launchLibraryClient = new LaunchLibraryApi.LaunchLibraryClient();
+            return launchLibraryClient.GetLaunches(startDate: DateTimeOffset.UtcNow, limit: 50);
+        }
+
         private static int? GetAgencyId(string agencyName)
         {
             if (string.IsNullOrEmpty(agencyName)) return null;
@@ -108,5 +130,4 @@ namespace LaunchCalendarSkill
             }
         }
     }
-
 }
