@@ -14,13 +14,12 @@ namespace LaunchCalendarSkill
 {
     public class Function
     {
-        private Lazy<Task<LaunchLibraryApi.Launch[]>> _cachedUpcomingLaunches;
-        private DateTimeOffset _cacheTimestamp;
+        private LaunchLibraryApi.Launch[] _cachedUpcomingLaunches;
+        private DateTimeOffset? _cacheTimestamp;
 
         public Function()
         {
-            _cachedUpcomingLaunches = new Lazy<Task<LaunchLibraryApi.Launch[]>>(GetUpcomingLaunches);
-            _cacheTimestamp = DateTimeOffset.Now;
+            _cachedUpcomingLaunches = new LaunchLibraryApi.Launch[0];
         }
 
         public Task<SkillResponse> FunctionHandler(SkillRequest input, ILambdaContext context)
@@ -92,20 +91,22 @@ namespace LaunchCalendarSkill
             });
         }
 
-        private Task<LaunchLibraryApi.Launch[]> GetUpcomingLaunchesFromCache()
+        private async Task<LaunchLibraryApi.Launch[]> GetUpcomingLaunchesFromCache()
         {
-            if (DateTimeOffset.Now.Subtract(_cacheTimestamp) > TimeSpan.FromHours(4))
+            bool shouldBeRefreshed = _cacheTimestamp == null || DateTimeOffset.Now.Subtract(_cacheTimestamp.Value) > TimeSpan.FromHours(4);
+
+            if (shouldBeRefreshed)
             {
-                _cachedUpcomingLaunches = new Lazy<Task<LaunchLibraryApi.Launch[]>>(GetUpcomingLaunches);
+                _cachedUpcomingLaunches = await GetUpcomingLaunches();
             }
 
-            return _cachedUpcomingLaunches.Value;
+            return _cachedUpcomingLaunches;
         }
 
         private Task<LaunchLibraryApi.Launch[]> GetUpcomingLaunches()
         {
             var launchLibraryClient = new LaunchLibraryApi.LaunchLibraryClient();
-            return launchLibraryClient.GetLaunches(startDate: DateTimeOffset.UtcNow, limit: 50);
+            return launchLibraryClient.GetLaunches(startDate: DateTimeOffset.UtcNow, limit: 100);
         }
 
         private static int? GetAgencyId(string agencyName)
