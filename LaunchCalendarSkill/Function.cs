@@ -4,6 +4,7 @@ using Alexa.NET.Request.Type;
 using Alexa.NET.Response;
 using Amazon.Lambda.Core;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
@@ -30,8 +31,8 @@ namespace LaunchCalendarSkill
                     logger.LogLine($"Incoming intent {intentRequest.Intent.Name}");
                     return HandleIntentAsync(intentRequest, logger);
 
-                // Ignore any request types we don't understand
-                default: return Task.FromResult<SkillResponse>(null);
+                default:
+                    throw new NotImplementedException();
             }
         }
 
@@ -71,7 +72,7 @@ namespace LaunchCalendarSkill
                 }
                 else
                 {
-                    responseSpeech = $"{launch.Rocket.Name} will be launching the {launch.Missions.First().Name} mission <break strength=\"weak\"/> from {launch.Location.Name} <break strength=\"weak\"/> no earlier than <say-as interpret-as=\"date\">????{launch.Net.Value.ToString("MMdd")}</say-as>.";
+                    responseSpeech = $"{launch.Rocket.Name} will be launching the {launch.Missions.First().Name} mission <break strength=\"medium\"/> from {launch.Location.Name} <break strength=\"medium\"/> no earlier than <say-as interpret-as=\"date\">????{launch.Net.Value.ToString("MMdd")}</say-as>.";
                 }
                 
             }
@@ -81,9 +82,11 @@ namespace LaunchCalendarSkill
                 responseSpeech = "Sorry, I wasn't able to retrieve the next launch.";
             }
 
+            logger.LogLine("Returning speech response");
+
             return ResponseBuilder.Tell(new SsmlOutputSpeech()
             {
-                Ssml = responseSpeech
+                Ssml = $"<speak>{responseSpeech}</speak>"
             });
         }
 
