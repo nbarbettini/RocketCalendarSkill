@@ -11,8 +11,8 @@
     "configuration" : "Release",
     "framework"     : "netcoreapp1.0",
     "function-runtime" : "dotnetcore1.0",
-    "function-memory-size" : 256,
-    "function-timeout"     : 30,
+    "function-memory-size" : 128,
+    "function-timeout"     : 15,
     "function-handler"     : "LaunchCalendarSkill::LaunchCalendarSkill.Function::FunctionHandler",
     "function-name"        : "launchCalendarSkill"
 }

@@ -15,8 +15,6 @@ namespace LaunchCalendarSkill
 {
     public class Function
     {
-        private readonly string[] ValidIntentNames = new[] { "NextLaunchIntent" };
-
         public Task<SkillResponse> FunctionHandler(SkillRequest input, ILambdaContext context)
         {
             var logger = context.Logger;
@@ -48,7 +46,7 @@ namespace LaunchCalendarSkill
 
         private async Task<SkillResponse> HandleIntentAsync(IntentRequest intentRequest, ILambdaLogger logger)
         {
-            bool validIntent = ValidIntentNames.Contains(intentRequest.Intent.Name, StringComparer.Ordinal);
+            bool validIntent = "NextLaunchIntent".Equals(intentRequest.Intent.Name, StringComparison.Ordinal);
             if (!validIntent) throw new ArgumentException("Unknown intent.");
 
             var agencyName = intentRequest.Intent.Slots?.FirstOrDefault(slot => slot.Key == "agency").Value?.Value;
@@ -59,7 +57,7 @@ namespace LaunchCalendarSkill
             try
             {
                 var launchLibraryClient = new LaunchLibraryApi.LaunchLibraryClient();
-                var limit = agencyId == null ? 1 : 10;
+                var limit = agencyId == null ? 1 : 25;
                 var upcomingLaunches = await launchLibraryClient.GetLaunches(startDate: DateTimeOffset.UtcNow, limit: limit);
 
                 var launch = agencyId == null
@@ -68,7 +66,7 @@ namespace LaunchCalendarSkill
 
                 if (launch == null)
                 {
-                    responseSpeech = $"I don't see any upcoming {(agencyId == null ? "" : agencyName)} launches.";
+                    responseSpeech = $"I can't find any upcoming {(agencyId == null ? "" : agencyName)} launches.";
                 }
                 else
                 {
@@ -81,8 +79,6 @@ namespace LaunchCalendarSkill
                 logger.LogLine(ex.Message);
                 responseSpeech = "Sorry, I wasn't able to retrieve the next launch.";
             }
-
-            logger.LogLine("Returning speech response");
 
             return ResponseBuilder.Tell(new SsmlOutputSpeech()
             {
@@ -98,8 +94,16 @@ namespace LaunchCalendarSkill
             {
                 case "SPACE X":
                 case "SPACEX": return 121;
+
                 case "NASA": return 44;
                 case "JAXA": return 37;
+
+                case "ORBITAL ATK":
+                case "ORBITAL": return 179;
+
+                case "UNITED LAUNCH ALLIANCE":
+                case "ULA": return 124;
+
                 default: return null;
             }
         }
