@@ -128,6 +128,8 @@ namespace LaunchCalendarSkill
                 case "UNITED LAUNCH ALLIANCE":
                 case "ULA": return 124;
 
+                case "BLUE ORIGIN": return 141;
+
                 default: return null;
             }
         }
