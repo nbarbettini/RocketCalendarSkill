@@ -93,11 +93,12 @@ namespace LaunchCalendarSkill
 
         private async Task<LaunchLibraryApi.Launch[]> GetUpcomingLaunchesFromCache()
         {
-            bool shouldBeRefreshed = _cacheTimestamp == null || DateTimeOffset.Now.Subtract(_cacheTimestamp.Value) > TimeSpan.FromHours(4);
+            bool shouldBeRefreshed = _cacheTimestamp == null || DateTimeOffset.UtcNow.Subtract(_cacheTimestamp.Value) > TimeSpan.FromHours(4);
 
             if (shouldBeRefreshed)
             {
                 _cachedUpcomingLaunches = await GetUpcomingLaunches();
+                _cacheTimestamp = DateTimeOffset.UtcNow;
             }
 
             return _cachedUpcomingLaunches;
