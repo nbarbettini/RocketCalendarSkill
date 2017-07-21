@@ -10,14 +10,14 @@ namespace LaunchCalendarSkill.LaunchLibraryApi
     {
         private const string LaunchesBaseUrl = "https://launchlibrary.net/1.2/launch?mode=verbose";
 
-        public async Task<Launch[]> GetLaunches(DateTimeOffset startDate, int limit = 10, int offset = 0)
+        public async Task<Launch[]> GetLaunches(DateTimeOffset startDate, int limit = 10, int offset = 0, ISimpleLogger logger = null)
         {
             var url = $"{LaunchesBaseUrl}&startdate={startDate.ToUnixTimeSeconds()}&limit={limit}&offset={offset}";
 
             var client = new HttpClient();
             var request = new HttpRequestMessage(HttpMethod.Get, url);
             request.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-            request.Headers.UserAgent.Add(new ProductInfoHeaderValue("LaunchCalendarSkill", "0.0.1"));
+            request.Headers.UserAgent.Add(new ProductInfoHeaderValue("RocketCalendarSkill", "0.0.1"));
 
             var response = await client.SendAsync(request);
             response.EnsureSuccessStatusCode();
@@ -29,9 +29,20 @@ namespace LaunchCalendarSkill.LaunchLibraryApi
                 DateFormatString = "yyyyMMddTHHmmssZ",
                 DateParseHandling = DateParseHandling.DateTimeOffset
             };
-            var launchesResponse = JsonConvert.DeserializeObject<LaunchesResponse>(json, settings);
 
-            return launchesResponse?.Launches ?? new Launch[0];
+            try
+            {
+                var launchesResponse = JsonConvert.DeserializeObject<LaunchesResponse>(json, settings);
+
+                return launchesResponse?.Launches ?? new Launch[0];
+            }
+            catch (Exception)
+            {
+                logger.LogLine("Error while deserializing JSON. Dumping JSON output:");
+                logger.LogLine(json);
+
+                throw;
+            }
         }
     }
 }

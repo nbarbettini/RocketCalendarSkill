@@ -25,8 +25,13 @@ namespace LaunchCalendarSkill
         public Task<SkillResponse> FunctionHandler(SkillRequest input, ILambdaContext context)
         {
             var logger = context.Logger;
-            logger.LogLine($"Incoming {input.Request.Type}");
 
+            if (input.Request.RequestId == "EdwRequestId.ping")
+            {
+                logger.LogLine("Pong!");
+            }
+
+            logger.LogLine($"Incoming {input.Request.Type}");
             switch (input.Request)
             {
                 case LaunchRequest launchRequest:
@@ -63,7 +68,7 @@ namespace LaunchCalendarSkill
 
             try
             {
-                var upcomingLaunches = await GetUpcomingLaunchesFromCache();
+                var upcomingLaunches = await GetUpcomingLaunchesFromCache(logger);
 
                 var launch = agencyId == null
                     ? upcomingLaunches.FirstOrDefault()
@@ -81,6 +86,7 @@ namespace LaunchCalendarSkill
             }
             catch (Exception ex)
             {
+                logger.LogLine($"Exception caught: {ex.GetType().Name}");
                 logger.LogLine(ex.Message);
                 responseSpeech = "Sorry, I wasn't able to retrieve the next launch.";
             }
@@ -91,23 +97,24 @@ namespace LaunchCalendarSkill
             });
         }
 
-        private async Task<LaunchLibraryApi.Launch[]> GetUpcomingLaunchesFromCache()
+        private async Task<LaunchLibraryApi.Launch[]> GetUpcomingLaunchesFromCache(ILambdaLogger lambdaLogger)
         {
             bool shouldBeRefreshed = _cacheTimestamp == null || DateTimeOffset.UtcNow.Subtract(_cacheTimestamp.Value) > TimeSpan.FromHours(4);
 
             if (shouldBeRefreshed)
             {
-                _cachedUpcomingLaunches = await GetUpcomingLaunches();
+                lambdaLogger.LogLine("Cache is stale/empty, getting latest launch data...");
+                _cachedUpcomingLaunches = await GetUpcomingLaunches(lambdaLogger);
                 _cacheTimestamp = DateTimeOffset.UtcNow;
             }
 
             return _cachedUpcomingLaunches;
         }
 
-        private Task<LaunchLibraryApi.Launch[]> GetUpcomingLaunches()
+        private Task<LaunchLibraryApi.Launch[]> GetUpcomingLaunches(ILambdaLogger lambdaLogger)
         {
             var launchLibraryClient = new LaunchLibraryApi.LaunchLibraryClient();
-            return launchLibraryClient.GetLaunches(startDate: DateTimeOffset.UtcNow, limit: 100);
+            return launchLibraryClient.GetLaunches(startDate: DateTimeOffset.UtcNow, limit: 100, logger: new LambdaLoggerAdapter(lambdaLogger));
         }
 
         private static int? GetAgencyId(string agencyName)
