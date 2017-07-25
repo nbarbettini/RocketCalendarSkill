@@ -35,11 +35,16 @@ namespace LaunchCalendarSkill
             switch (input.Request)
             {
                 case LaunchRequest launchRequest:
+                    logger.LogLine("Incoming launch request");
                     return HandleWelcomeAsync(launchRequest, logger);
 
                 case IntentRequest intentRequest:
                     logger.LogLine($"Incoming intent {intentRequest.Intent.Name}");
                     return HandleIntentAsync(intentRequest, logger);
+
+                case SessionEndedRequest sessionEndRequest:
+                    logger.LogLine("Session ending: " + sessionEndRequest.Reason.ToString());
+                    return Task.FromResult(ResponseBuilder.Empty());
 
                 default:
                     throw new NotImplementedException();
@@ -52,6 +57,7 @@ namespace LaunchCalendarSkill
             {
                 Text = "Welcome! You can ask when the next launch is."
             });
+            response.Response.ShouldEndSession = false;
 
             return Task.FromResult(response);
         }
