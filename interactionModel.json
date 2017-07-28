@@ -8,6 +8,12 @@
         }
       ],
       "intent": "NextLaunchIntent"
+    },
+    {
+      "intent": "AMAZON.HelpIntent"
+    },
+    {
+      "intent": "AMAZON.StopIntent"
     }
   ]
 }

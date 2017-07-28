@@ -14,12 +14,11 @@ namespace LaunchCalendarSkill
 {
     public class Function
     {
-        private LaunchLibraryApi.Launch[] _cachedUpcomingLaunches;
-        private DateTimeOffset? _cacheTimestamp;
+        private readonly NextLaunchIntentHandler _nextLaunchIntentHandler;
 
         public Function()
         {
-            _cachedUpcomingLaunches = new LaunchLibraryApi.Launch[0];
+            _nextLaunchIntentHandler = new NextLaunchIntentHandler();
         }
 
         public Task<SkillResponse> FunctionHandler(SkillRequest input, ILambdaContext context)
@@ -55,96 +54,50 @@ namespace LaunchCalendarSkill
         {
             var response = ResponseBuilder.Tell(new PlainTextOutputSpeech()
             {
-                Text = "Welcome! You can ask when the next launch is."
+                Text = "Welcome to Rocket Calendar! You can ask about upcoming rocket launches."
             });
             response.Response.ShouldEndSession = false;
 
             return Task.FromResult(response);
         }
 
-        private async Task<SkillResponse> HandleIntentAsync(IntentRequest intentRequest, ILambdaLogger logger)
+        private Task<SkillResponse> HandleIntentAsync(IntentRequest request, ILambdaLogger logger)
         {
-            bool validIntent = "NextLaunchIntent".Equals(intentRequest.Intent.Name, StringComparison.Ordinal);
-            if (!validIntent) throw new ArgumentException("Unknown intent.");
-
-            var agencyName = intentRequest.Intent.Slots?.FirstOrDefault(slot => slot.Key == "agency").Value?.Value;
-            var agencyId = GetAgencyId(agencyName);
-
-            var responseSpeech = string.Empty;
-
-            try
+            switch (request.Intent.Name)
             {
-                var upcomingLaunches = await GetUpcomingLaunchesFromCache(logger);
+                case "NextLaunchIntent": return _nextLaunchIntentHandler.Handle(request, logger);
+                case "AMAZON.HelpIntent": return HandleHelpIntent(request, logger);
+                case "AMAZON.StopIntent": return HandleStopIntent(request, logger);
 
-                var launch = agencyId == null
-                    ? upcomingLaunches.FirstOrDefault()
-                    : upcomingLaunches.FirstOrDefault(l => l.Rocket.Agencies.Any(a => a.Id == agencyId));
+                default:
+                    logger.LogLine($"Unknown intent request name '{request.Intent.Name}'");
 
-                if (launch == null)
-                {
-                    responseSpeech = $"I can't find any upcoming {(agencyId == null ? "" : agencyName)} launches.";
-                }
-                else
-                {
-                    responseSpeech = $"{launch.Rocket.Name} will be launching the {launch.Missions.First().Name} mission <break strength=\"medium\"/> from {launch.Location.Name} <break strength=\"medium\"/> no earlier than <say-as interpret-as=\"date\">????{launch.Net.Value.ToString("MMdd")}</say-as>.";
-                }
-                
+                    var response = ResponseBuilder.Tell(new PlainTextOutputSpeech
+                    {
+                        Text = "I'm sorry, I'm not sure what you mean."
+                    });
+
+                    return Task.FromResult(response);
             }
-            catch (Exception ex)
-            {
-                logger.LogLine($"Exception caught: {ex.GetType().Name}");
-                logger.LogLine(ex.Message);
-                responseSpeech = "Sorry, I wasn't able to retrieve the next launch.";
-            }
+        }
 
-            return ResponseBuilder.Tell(new SsmlOutputSpeech()
+        private Task<SkillResponse> HandleHelpIntent(IntentRequest request, ILambdaLogger logger)
+        {
+            var response = ResponseBuilder.Tell(new PlainTextOutputSpeech
             {
-                Ssml = $"<speak>{responseSpeech}</speak>"
+                Text = "I can tell you when and where upcoming launches are, and also when agencies like NASA or Space X are launching next."
             });
+            response.Response.ShouldEndSession = false;
+
+            return Task.FromResult(response);
         }
 
-        private async Task<LaunchLibraryApi.Launch[]> GetUpcomingLaunchesFromCache(ILambdaLogger lambdaLogger)
+        private Task<SkillResponse> HandleStopIntent(IntentRequest request, ILambdaLogger logger)
         {
-            bool shouldBeRefreshed = _cacheTimestamp == null || DateTimeOffset.UtcNow.Subtract(_cacheTimestamp.Value) > TimeSpan.FromHours(4);
+            var response = ResponseBuilder.Empty();
+            response.Response.ShouldEndSession = true;
 
-            if (shouldBeRefreshed)
-            {
-                lambdaLogger.LogLine("Cache is stale/empty, getting latest launch data...");
-                _cachedUpcomingLaunches = await GetUpcomingLaunches(lambdaLogger);
-                _cacheTimestamp = DateTimeOffset.UtcNow;
-            }
-
-            return _cachedUpcomingLaunches;
-        }
-
-        private Task<LaunchLibraryApi.Launch[]> GetUpcomingLaunches(ILambdaLogger lambdaLogger)
-        {
-            var launchLibraryClient = new LaunchLibraryApi.LaunchLibraryClient();
-            return launchLibraryClient.GetLaunches(startDate: DateTimeOffset.UtcNow, limit: 100, logger: new LambdaLoggerAdapter(lambdaLogger));
-        }
-
-        private static int? GetAgencyId(string agencyName)
-        {
-            if (string.IsNullOrEmpty(agencyName)) return null;
-
-            switch (agencyName.ToUpper())
-            {
-                case "SPACE X":
-                case "SPACEX": return 121;
-
-                case "NASA": return 44;
-                case "JAXA": return 37;
-
-                case "ORBITAL ATK":
-                case "ORBITAL": return 179;
-
-                case "UNITED LAUNCH ALLIANCE":
-                case "ULA": return 124;
-
-                case "BLUE ORIGIN": return 141;
-
-                default: return null;
-            }
+            return Task.FromResult(response);
         }
     }
 }
