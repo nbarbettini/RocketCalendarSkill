@@ -54,7 +54,7 @@ namespace LaunchCalendarSkill
         {
             var response = ResponseBuilder.Tell(new PlainTextOutputSpeech()
             {
-                Text = "Welcome to Rocket Calendar! You can ask about upcoming rocket launches."
+                Text = "What launch do you want to learn about?"
             });
             response.Response.ShouldEndSession = false;
 
@@ -85,7 +85,7 @@ namespace LaunchCalendarSkill
         {
             var response = ResponseBuilder.Tell(new PlainTextOutputSpeech
             {
-                Text = "I can tell you when and where upcoming launches are, and also when agencies like NASA or Space X are launching next."
+                Text = "I can tell you when and where upcoming launches are, and also when agencies like NASA or Space X are launching next. What launch do you want to know about?"
             });
             response.Response.ShouldEndSession = false;
 
