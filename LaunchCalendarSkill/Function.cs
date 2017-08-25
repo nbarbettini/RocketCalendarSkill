@@ -65,9 +65,10 @@ namespace LaunchCalendarSkill
         {
             switch (request.Intent.Name)
             {
-                case "NextLaunchIntent": return _nextLaunchIntentHandler.Handle(request, logger);
-                case "AMAZON.HelpIntent": return HandleHelpIntent(request, logger);
-                case "AMAZON.StopIntent": return HandleStopIntent(request, logger);
+                case "NextLaunchIntent": return _nextLaunchIntentHandler.HandleAsync(request, logger);
+                case "AMAZON.HelpIntent": return HandleHelpIntentAsync(request, logger);
+                case "AMAZON.StopIntent": return HandleStopIntentAsync(request, logger);
+                case "AMAZON.CancelIntent": return HandleStopIntentAsync(request, logger);
 
                 default:
                     logger.LogLine($"Unknown intent request name '{request.Intent.Name}'");
@@ -81,7 +82,7 @@ namespace LaunchCalendarSkill
             }
         }
 
-        private Task<SkillResponse> HandleHelpIntent(IntentRequest request, ILambdaLogger logger)
+        private Task<SkillResponse> HandleHelpIntentAsync(IntentRequest request, ILambdaLogger logger)
         {
             var response = ResponseBuilder.Tell(new PlainTextOutputSpeech
             {
@@ -92,7 +93,7 @@ namespace LaunchCalendarSkill
             return Task.FromResult(response);
         }
 
-        private Task<SkillResponse> HandleStopIntent(IntentRequest request, ILambdaLogger logger)
+        private Task<SkillResponse> HandleStopIntentAsync(IntentRequest request, ILambdaLogger logger)
         {
             var response = ResponseBuilder.Empty();
             response.Response.ShouldEndSession = true;

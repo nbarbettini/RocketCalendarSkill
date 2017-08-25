@@ -18,10 +18,23 @@ namespace LaunchCalendarSkill
             _cachedUpcomingLaunches = new LaunchLibraryApi.Launch[0];
         }
 
-        public async Task<SkillResponse> Handle(IntentRequest request, ILambdaLogger logger)
+        public async Task<SkillResponse> HandleAsync(IntentRequest request, ILambdaLogger logger)
         {
             var agencyName = request.Intent.Slots?.FirstOrDefault(slot => slot.Key == "agency").Value?.Value;
+            var agencyNameExists = !string.IsNullOrEmpty(agencyName);
+
             var agencyId = GetAgencyId(agencyName);
+
+            if (agencyNameExists && agencyId == null)
+            {
+                // The user said something weird
+                var response = ResponseBuilder.Tell(new PlainTextOutputSpeech
+                {
+                    Text = "I didn't quite get that. Which launch do you want to learn about?"
+                });
+                response.Response.ShouldEndSession = false;
+                return response;
+            }
 
             var responseSpeech = string.Empty;
 
