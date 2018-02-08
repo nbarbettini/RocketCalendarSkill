@@ -65,7 +65,7 @@ namespace LaunchCalendarSkill
 
             return ResponseBuilder.Tell(new SsmlOutputSpeech()
             {
-                Ssml = $"<speak>{responseSpeech}</speak>"
+                Ssml = $"<speak>{SsmlSanitizer.Sanitize(responseSpeech)}</speak>"
             });
         }
 
